@@ -1,0 +1,30 @@
+-- event_date (DATE) dan event_time (TIME) = waktu dinding Asia/Jakarta, tanpa konversi timezone.
+-- created_at/updated_at = UTC.
+CREATE TABLE IF NOT EXISTS bookings (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  booking_code VARCHAR(20) NOT NULL,
+  customer_id BIGINT UNSIGNED NOT NULL,
+  service_id BIGINT UNSIGNED NOT NULL,
+  package_id BIGINT UNSIGNED NOT NULL,
+  package_name_snapshot VARCHAR(100) NOT NULL,
+  package_price_snapshot INT UNSIGNED NOT NULL,
+  event_date DATE NOT NULL,
+  event_time TIME NOT NULL,
+  location VARCHAR(200) NOT NULL,
+  notes TEXT NULL,
+  subtotal INT UNSIGNED NOT NULL,
+  total_price INT UNSIGNED NOT NULL,
+  status ENUM('pending','confirmed','completed','cancelled') NOT NULL DEFAULT 'pending',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_bookings_code (booking_code),
+  KEY idx_bookings_customer (customer_id),
+  KEY idx_bookings_service (service_id),
+  KEY idx_bookings_package (package_id),
+  KEY idx_bookings_event_date (event_date),
+  KEY idx_bookings_status (status),
+  CONSTRAINT fk_bookings_customer FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE RESTRICT,
+  CONSTRAINT fk_bookings_service FOREIGN KEY (service_id) REFERENCES services (id) ON DELETE RESTRICT,
+  CONSTRAINT fk_bookings_package FOREIGN KEY (package_id) REFERENCES packages (id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

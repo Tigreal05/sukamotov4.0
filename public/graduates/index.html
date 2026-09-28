@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUKA MOTO — Graduation Photography</title>
+    <meta name="description" content="Paket foto wisuda SUKA MOTO. Pilih paket dan add-on, lihat estimasi total, lalu kirim booking.">
+    <meta property="og:title" content="SUKA MOTO — Graduation Photography">
+    <meta property="og:description" content="Kalkulator estimasi dan booking paket foto wisuda.">
+    <meta property="og:type" content="website">
+    <link rel="stylesheet" href="/assets/css/base.css">
+    <link rel="stylesheet" href="/assets/css/graduates.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Lewati ke konten</a>
+<header class="navbar">
+  <div class="container navbar-inner">
+    <a class="navbar-brand" href="/">SUKA MOTO</a>
+    <button class="nav-toggle" type="button" aria-controls="nav-menu" aria-expanded="false" aria-label="Buka menu">&#9776;</button>
+    <ul class="nav-menu" id="nav-menu">
+      <li><a href="/" data-page="/">Home</a></li>
+      <li><a href="/#layanan">Layanan</a></li>
+      <li><a href="/#portfolio">Portfolio</a></li>
+      <li><a href="/#tentang">Tentang</a></li>
+      <li><a href="/#kontak">Kontak</a></li>
+      <li><a class="btn btn-primary" href="/graduates/">Booking</a></li>
+    </ul>
+  </div>
+</header>
+<main id="main">
+<div class="container">
+    <header>
+        <div class="sub-title">Wisuda / Booking</div>
+        <h1>Kalkulator &amp; Booking Paket Wisuda</h1>
+        <p class="desc">Abadikan momen kelulusanmu. Durasi fleksibel, bebas foto dengan siapa saja!</p>
+    </header>
+
+    <section>
+        <div class="section-header"><span>01 / 03</span><span>Wajib dipilih</span></div>
+        <div class="section-title">Pilih paket utama</div>
+        <div class="card-grid" id="packageList" role="radiogroup" aria-label="Pilih paket utama" aria-live="polite">
+            <p class="muted" id="catalogStatus">Memuat paket...</p>
+        </div>
+    </section>
+
+    <section>
+        <div class="section-header"><span>02 / 03</span><span>Opsional • Pilih beberapa</span></div>
+        <div class="section-title">Tambahkan yang diperlukan</div>
+        <div class="card-grid" id="addonList"></div>
+    </section>
+
+    <section>
+        <div class="section-header"><span>03 / 03</span><span>Wajib kecuali ditandai opsional</span></div>
+        <div class="section-title">Detail sesi</div>
+
+        <div class="form-group">
+            <label for="clientName">Nama lengkap <span>*</span></label>
+            <input type="text" id="clientName" class="form-control" placeholder="Tulis sesuai identitas" autocomplete="name" maxlength="100" aria-describedby="err-clientName">
+            <p class="field-error" id="err-clientName" role="alert"></p>
+        </div>
+        <div class="form-group">
+            <label for="clientPhone">Nomor WhatsApp <span>*</span></label>
+            <input type="tel" id="clientPhone" class="form-control" placeholder="08123456789" autocomplete="tel" inputmode="tel" maxlength="20" aria-describedby="err-clientPhone">
+            <p class="field-error" id="err-clientPhone" role="alert"></p>
+        </div>
+        <div class="form-group">
+            <label for="clientEmail">Email (opsional)</label>
+            <input type="email" id="clientEmail" class="form-control" placeholder="nama@email.com" autocomplete="email" maxlength="254" aria-describedby="err-clientEmail">
+            <p class="field-error" id="err-clientEmail" role="alert"></p>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="clientDate">Tanggal sesi <span>*</span></label>
+                <input type="date" id="clientDate" class="form-control" aria-describedby="err-clientDate">
+                <p class="field-error" id="err-clientDate" role="alert"></p>
+            </div>
+            <div class="form-group">
+                <label for="clientTime">Waktu sesi <span>*</span></label>
+                <input type="time" id="clientTime" class="form-control" aria-describedby="err-clientTime">
+                <p class="field-error" id="err-clientTime" role="alert"></p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="clientLocation">Lokasi / kampus pemotretan <span>*</span></label>
+            <input type="text" id="clientLocation" class="form-control" placeholder="Contoh: Gedung Negara, Cirebon" maxlength="200" aria-describedby="err-clientLocation">
+            <p class="field-error" id="err-clientLocation" role="alert"></p>
+        </div>
+        <div class="form-group">
+            <label for="clientNotes">Catatan (opsional)</label>
+            <textarea id="clientNotes" class="form-control" rows="3" maxlength="1000"></textarea>
+        </div>
+    </section>
+
+    <div class="summary-box" id="summaryBox">
+        <div class="summary-row"><span>Paket utama:</span><span id="summaryPackage" class="summary-value">Belum ada paket dipilih</span></div>
+        <div class="summary-row"><span>Add-on pilihan:</span><span id="summaryAddons" class="summary-value">Belum ada add-on</span></div>
+        <div class="summary-total"><span>Total estimasi</span><span id="summaryTotal" aria-live="polite">Rp 0</span></div>
+        <p class="field-error" id="formError" role="alert" style="text-align:center"></p>
+        <button class="btn-wa" id="bookBtn" type="button" disabled>Booking Sekarang</button>
+        <div class="wa-note">Total final dihitung server saat booking dikirim. Booking akan berstatus menunggu konfirmasi; jadwal dan DP dikonfirmasi lewat WhatsApp.</div>
+    </div>
+
+    <div class="summary-box" id="successBox" hidden tabindex="-1">
+        <h2 class="success-title">Booking berhasil dikirim.</h2>
+        <div class="summary-row"><span>Kode Booking</span><strong id="okCode" class="ok-code"></strong></div>
+        <div class="summary-row"><span>Status</span><span class="summary-value">Menunggu konfirmasi</span></div>
+        <div class="summary-row"><span>Total</span><span id="okTotal" class="summary-value"></span></div>
+        <a class="btn-wa" id="okWa" href="#" target="_blank" rel="noopener">Hubungi via WhatsApp ↗</a>
+        <div class="wa-note">Simpan kode booking dan kirim lewat WhatsApp agar kami dapat menindaklanjuti.</div>
+    </div>
+</div>
+</main>
+<footer class="footer" id="kontak">
+  <div class="container">
+    <div class="footer-grid">
+      <div><h2>SUKA MOTO</h2><p>Photography &amp; Digital Creative</p></div>
+      <div><h2>Jelajahi</h2><ul><li><a href="/#layanan">Layanan</a></li><li><a href="/#portfolio">Portfolio</a></li><li><a href="/#tentang">Tentang</a></li></ul></div>
+      <div><h2>Kontak</h2><ul>
+        <li><a href="https://instagram.com/sukaamotoo" target="_blank" rel="noopener">Instagram</a></li>
+        <li><a data-wa="Halo SUKA MOTO, saya ingin bertanya mengenai layanan fotografi." href="https://wa.me/6285156918852">WhatsApp</a></li>
+        <li><span>TikTok: segera hadir</span></li></ul></div>
+    </div>
+    <p class="footer-copy">&copy; 2026 SUKA MOTO</p>
+  </div>
+</footer>
+<script src="/assets/js/whatsapp.js" defer></script>
+<script src="/assets/js/api.js" defer></script>
+<script src="/assets/js/navigation.js" defer></script>
+<script src="/assets/js/graduates.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+:root {
+  --primary: #c5a059;
+  --bg: #0f0f11;
+  --card: #18181c;
+  --text: #f3f3f5;
+  --muted: #9a9ab0;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+body { background: var(--bg); color: var(--text); text-align: center; line-height: 1.6; }
+
+.hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 40px 20px; background: linear-gradient(rgba(15,15,17,0.7), rgba(15,15,17,1)), url('https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80') center/cover; }
+.subtitle { color: var(--primary); letter-spacing: 3px; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 10px; }
+.title { font-family: 'Playfair Display', serif; font-size: 2.8rem; color: var(--primary); margin-bottom: 15px; }
+
+.guest-box { background: rgba(24,24,28,0.8); border: 1px solid rgba(197,160,89,0.3); padding: 15px 25px; border-radius: 12px; margin: 20px 0; backdrop-filter: blur(5px); }
+.guest-name { font-weight: 600; color: var(--primary); font-size: 1.1rem; }
+
+.btn { display: inline-flex; align-items: center; gap: 8px; background: var(--primary); color: #000; font-weight: 600; padding: 10px 24px; border-radius: 25px; text-decoration: none; margin-top: 15px; }
+
+.section { padding: 60px 20px; max-width: 600px; margin: 0 auto; }
+.sec-title { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: var(--primary); margin-bottom: 25px; }
+
+.couple-card { background: var(--card); border-radius: 16px; padding: 25px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 20px; }
+.couple-img { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary); margin-bottom: 15px; }
+
+.event-card { background: var(--card); padding: 20px; border-radius: 12px; border-left: 3px solid var(--primary); text-align: left; margin-bottom: 15px; }
+.event-card h4 { color: var(--primary); font-size: 1.1rem; margin-bottom: 5px; }
+
+footer { padding: 30px; font-size: 0.8rem; color: var(--muted); border-top: 1px solid rgba(255,255,255,0.05); }
+
