@@ -64,3 +64,4 @@ Integration test membuat booking sungguhan di database yang dikonfigurasi di `.e
 - `DB_USER dan DB_NAME wajib diisi` → periksa `.env`.
 - 503 "Layanan sementara tidak tersedia" → MySQL tidak terjangkau / kredensial salah.
 - Paket tidak muncul di `/graduates/` → jalankan `npm run db:migrate && npm run db:seed`.
+# sukamotov4.0
