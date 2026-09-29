@@ -6,7 +6,7 @@ const zlib = require("zlib");
 const express = require("express");
 const helmet = require("helmet");
 const cors = require("cors");
-const { staticCache, assetUrl } = require("./middleware/static-cache"); // Phase 7: cache + versioning aset
+const { staticCache, assetUrl, resolveSiteUrl } = require("./middleware/static-cache"); // Phase 7: cache + versioning aset; Phase 8: SITE_URL
 
 require("./config/env"); // memuat .env + validasi keamanan startup (lihat config/env-check.js)
 
@@ -79,15 +79,41 @@ function createApp() {
   app.use(express.json({ limit: "20kb" }));
   app.use("/api", apiLimiter);
 
-  app.use("/api/health", require("./routes/health.routes"));
-  app.use("/api/services", require("./routes/services.routes"));
-  app.use("/api/packages", require("./routes/packages.routes"));
-  app.use("/api/addons", require("./routes/addons.routes"));
-  app.use("/api/bookings", require("./routes/bookings.routes"));
-  app.use("/api/contact", require("./routes/contact.routes"));
-  app.use("/api", apiNotFound);
+      // Phase 8 (SEO): API TIDAK boleh ter-index crawler. Meta robots tidak berlaku untuk
+    // respons JSON, jadi dipakai header X-Robots-Tag pada SETIAP endpoint (bukan prefix-mount
+    // yang akan menyalah-matching path "/api...").
+    const noIndexApi = (req, res, next) => { res.setHeader("X-Robots-Tag", "noindex, nofollow"); next(); };
+    app.use("/api/health", noIndexApi, require("./routes/health.routes"));
+  app.use("/api/services", noIndexApi, require("./routes/services.routes"));
+  app.use("/api/packages", noIndexApi, require("./routes/packages.routes"));
+  app.use("/api/addons", noIndexApi, require("./routes/addons.routes"));
+  app.use("/api/bookings", noIndexApi, require("./routes/bookings.routes"));
+  app.use("/api/contact", noIndexApi, require("./routes/contact.routes"));
+  app.use("/api", noIndexApi, apiNotFound);
 
   app.use("/invite", (req, res) => res.redirect(301, `/invinite${req.url}`));
+
+  // Phase 8 (SEO): robots.txt & sitemap.xml dibuat dari daftar route publik — bukan file
+  // statis yang bisa lupa disinkronkan. Absolut memakai env SITE_URL (tanpa domain palsu).
+  const PUBLIC_SITEMAP_PATHS = ["/", "/graduates/", "/wedding/", "/event/", "/invinite/"];
+
+  app.get("/robots.txt", (req, res) => {
+    const site = resolveSiteUrl();
+    res.setHeader("Cache-Control", "no-cache");
+    res.type("text/plain").send(
+      ["User-agent: *", "Allow: /", "Disallow: /admin/", "Disallow: /api/", "", `Sitemap: ${site}/sitemap.xml`, ""].join("\n")
+    );
+  });
+  app.get("/sitemap.xml", (req, res) => {
+    const site = resolveSiteUrl();
+    res.setHeader("Cache-Control", "no-cache");
+    // lastmod dari mtime public/index.html (proxy perubahan konten situs), bukan tanggal request,
+    // agar respons byte-stabil dan ETag revalidation bekerja.
+    let lastmod = new Date().toISOString().slice(0, 10);
+    try { lastmod = fs.statSync(path.join(PUBLIC_DIR, "index.html")).mtime.toISOString().slice(0, 10); } catch (e) { /* fallback hari ini */ }
+    const urls = PUBLIC_SITEMAP_PATHS.map((p) => `  <url><loc>${site}${p}</loc><lastmod>${lastmod}</lastmod></url>`).join("\n");
+    res.type("application/xml").send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`);
+  });
 
   // BUG-002 (Phase 6): sebelumnya index:false & redirect:false membuat "/" dan
   // "/graduates/" dst. mengembalikan 404 padahal internal links memakai trailing slash.
@@ -101,6 +127,8 @@ function createApp() {
 
   // Phase 7 (perf): injeksi versi aset (?v=hash) ke <link>/<script> di HTML publik saat respons,
   // sehingga browser boleh meng-cache aset dengan aman tanpa risiko versi lama menempel.
+  // Phase 8 (SEO): middleware yang sama juga mengganti placeholder https://__SITE_URL__
+  // (canonical/og:url/JSON-LD) dengan domain asli dari env SITE_URL saat runtime.
   const ASSET_VERSION = assetVersion(PUBLIC_DIR);
   app.use(assetUrl(ASSET_VERSION));
 
