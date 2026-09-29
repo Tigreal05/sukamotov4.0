@@ -81,19 +81,42 @@ function staticCache(publicDir) {
 // assetUrl(version): middleware pasca-static yang menyuntik ?v=<version> pada
 // referensi <link rel="stylesheet"> dan <script src> ke /assets/ di respons HTML.
 // Revisi aset tersimpan di memory (bukan ditulis ke disk) — source tetap readable.
+//
+// Phase 8 (SEO): middleware yang sama juga mengganti placeholder absolut
+// https://__SITE_URL__ dengan SITE_URL environment saat runtime. Canonical,
+// og:url, twitter:image, sitemap, dan JSON-LD ditulis dengan placeholder di
+// source HTML sehingga tidak ada domain palsu yang di-hardcode; deploy tinggal
+// mengisi SITE_URL=https://domain-asli.com di .env.
 function assetUrl(version) {
   const tag = String(version).replace(/[^a-z0-9]/gi, "");
+  const siteUrl = resolveSiteUrl();
   return function rewriteAssetUrls(req, res, next) {
     if (req.method !== "GET") return next();
     const origSend = res.send.bind(res);
     res.send = function (body) {
-      if (typeof body === "string" && body.includes("/assets/") && /<link|<script/.test(body)) {
+      if (typeof body !== "string") return origSend(body);
+      let changed = false;
+      if (body.includes("/assets/") && /<link|<script/.test(body)) {
         body = body.replace(
           /((?:href|src)="\/assets\/[^"?]+)(?:"|\?[^"]*")/g,
-          (m, prefix) => prefix + "?v=" + tag + '"'
+          (m, prefix) => { changed = true; return prefix + "?v=" + tag + '"'; }
         );
+      }
+      // Substitusi domain hanya bila token placeholder benar-benar ada —
+      // tidak menyentuh header Location redirect maupun konten lain.
+      if (body.includes("__SITE_URL__")) {
+        // {{CANONICAL_PATH}} -> path URL yang sedang diminta, dinormalisasi ke bentuk
+        // canonical trailing-slash (/wedding -> /wedding/), agar canonical selalu
+        // self-referencing dan konsisten meski halaman diakses dari alias tanpa slash.
+        let cp = canonicalPathForRequest(req);
+        body = body.split("{{CANONICAL_PATH}}").join(cp);
+        body = body.split("https://__SITE_URL__").join(siteUrl);
+        changed = true;
+      }
+      if (changed && !res.hasHeader("Content-Encoding")) {
+        // Jangan pernah menulis Content-Length mentah di atas body gzip (express.static
+        // dapat mengirim .gz pre-compressed dengan Content-Encoding tersimpan).
         res.setHeader("Content-Length", Buffer.byteLength(body));
-        return origSend(body);
       }
       return origSend(body);
     };
@@ -101,4 +124,29 @@ function assetUrl(version) {
   };
 }
 
-module.exports = { staticCache, assetUrl };
+// SITE_URL normalisasi: tanpa trailing slash, wajib ber-skema http(s).
+// Default dev mengikuti PORT aktif (bukan hardcode 3000) supaya canonical/og:url/sitemap
+// self-referencing benar saat server berjalan di port acak (mis. dalam automated tests).
+// Production tanpa SITE_URL -> peringatan logger + fallback localhost:<PORT>.
+function resolveSiteUrl() {
+  const logger = require("../config/logger");
+  let raw = (process.env.SITE_URL || "").trim().replace(/\/+$/, "");
+  if (!raw) {
+    const port = Number.parseInt(process.env.PORT || "3000", 10) || 3000;
+    if (process.env.NODE_ENV === "production") {
+      logger.warn("site_url_unset", { hint: "Set SITE_URL=https://domain-anda di .env production; canonical/sitemap memakai fallback localhost." });
+    }
+    raw = `http://localhost:${port}`;
+  }
+  if (!/^https?:\/\//.test(raw)) raw = "https://" + raw.replace(/^\/\//, "");
+  return raw;
+}
+
+// Path canonical untuk halaman yang diminta: buang query string, pastikan trailing slash.
+function canonicalPathForRequest(req) {
+  let cp = ((req && req.path) || "/").split("?")[0];
+  if (!cp.endsWith("/")) cp += "/";
+  return cp;
+}
+
+module.exports = { staticCache, assetUrl, resolveSiteUrl, canonicalPathForRequest };
