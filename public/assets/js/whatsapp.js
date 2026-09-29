@@ -7,5 +7,5 @@ SM.waUrl = function (text) {
 document.querySelectorAll("a[data-wa]").forEach(function (a) {
   a.href = SM.waUrl(a.getAttribute("data-wa"));
   a.target = "_blank";
-  a.rel = "noopener";
+  a.rel = "noopener noreferrer"; // Phase 7: konsisten dengan praktik halaman lain (tabnabbing guard)
 });

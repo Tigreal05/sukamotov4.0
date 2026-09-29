@@ -78,7 +78,13 @@ body.sm { margin: 0; font-family: var(--font-body); font-size: var(--fs-body); l
 }
 
 /* Hero */
-.hero { text-align: center; padding: 72px 0 56px; background: linear-gradient(rgba(0,0,0,.72), rgba(10,10,10,1)), url("https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=70") center/cover; }
+/* Phase 7 (LCP): background hero dipindah ke aset lokal teroptimasi (43/98 KB) —
+   sebelumnya image CDN eksternal w=1200 yang memperlambat LCP di jaringan mobile.
+   Fallback warna gelap menjaga first paint tetap cepat meski image belum tiba. */
+.hero { text-align: center; padding: 72px 0 56px; background-color: #0a0a0a; background-image: linear-gradient(rgba(0,0,0,.72), rgba(10,10,10,1)), url("/assets/images/optimized/hero-470.jpg"); background-size: cover; background-position: center; }
+@media (min-resolution: 2dppx) and (min-width: 480px) {
+  .hero { background-image: linear-gradient(rgba(0,0,0,.72), rgba(10,10,10,1)), url("/assets/images/optimized/hero-940.jpg"); }
+}
 .hero .eyebrow { color: var(--color-primary); letter-spacing: 3px; font-size: var(--fs-caption); font-weight: 700; }
 .hero p.lead { color: #ddd; max-width: 560px; margin: 0 auto 24px; }
 .hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }

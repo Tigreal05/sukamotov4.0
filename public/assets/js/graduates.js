@@ -5,6 +5,10 @@
   var $ = function (id) { return document.getElementById(id); };
   var state = { pkg: null, catalogReady: false, lastCode: null };
 
+  // Phase 7 (perf): cache respons katalog dalam memory — halaman yang sama tidak
+  // meminta ulang /api/packages & /api/addons saat user menekan "Coba lagi".
+  var catalogCache = null;
+
   function el(tag, cls, text) {
     var e = document.createElement(tag);
     if (cls) e.className = cls;
@@ -76,12 +80,21 @@
   }
 
   async function loadCatalog() {
+    if (catalogCache) { // hit cache: 0 request jaringan tambahan
+      renderPackages(catalogCache[0].data);
+      renderAddons(catalogCache[1].data);
+      if (!catalogCache[0].data.length) { catalogError(); return; }
+      state.catalogReady = true;
+      $("bookBtn").disabled = false;
+      return;
+    }
     $("packageList").textContent = "Memuat paket...";
     try {
       var res = await Promise.all([
         SM.api("/api/packages?service=" + SERVICE),
         SM.api("/api/addons?service=" + SERVICE)
       ]);
+      catalogCache = res;
       renderPackages(res[0].data);
       renderAddons(res[1].data);
       if (!res[0].data.length) { catalogError(); return; }
