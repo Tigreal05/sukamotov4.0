@@ -85,8 +85,10 @@ function createApp() {
 
   app.use("/invite", (req, res) => res.redirect(301, `/invinite${req.url}`));
 
-  // Static: HANYA folder public/ — source server, .env, database/, node_modules/ tidak tersaji.
-  app.use(express.static(PUBLIC_DIR, { index: false, redirect: false, maxAge: isProd ? "1h" : 0 }));
+  // BUG-002 (Phase 6): sebelumnya index:false & redirect:false membuat "/" dan
+  // "/graduates/" dst. mengembalikan 404 padahal internal links memakai trailing slash.
+  // Static: HANYA folder public/ — source server, .env, database/, node_modules/ tetap tidak tersaji.
+  app.use(express.static(PUBLIC_DIR, { maxAge: isProd ? "1h" : 0 }));
 
   app.use(pageNotFound);
   app.use(errorHandler);
