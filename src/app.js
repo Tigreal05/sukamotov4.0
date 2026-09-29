@@ -1,8 +1,12 @@
 // Pabrik aplikasi Express. Dipakai oleh server.js dan oleh test.
 const path = require("path");
+const crypto = require("crypto");
+const fs = require("fs");
+const zlib = require("zlib");
 const express = require("express");
 const helmet = require("helmet");
 const cors = require("cors");
+const { staticCache, assetUrl } = require("./middleware/static-cache"); // Phase 7: cache + versioning aset
 
 require("./config/env"); // memuat .env + validasi keamanan startup (lihat config/env-check.js)
 
@@ -88,11 +92,38 @@ function createApp() {
   // BUG-002 (Phase 6): sebelumnya index:false & redirect:false membuat "/" dan
   // "/graduates/" dst. mengembalikan 404 padahal internal links memakai trailing slash.
   // Static: HANYA folder public/ — source server, .env, database/, node_modules/ tetap tidak tersaji.
+
+  // Phase 7 (perf): pre-compress CSS/JS yang dikirim mentah + Cache-Control terpisah:
+  // aset statis /assets/* = immutable 1 tahun (di-version via ?v=<hash>, lihat middleware/static-cache.js),
+  // HTML tetap no-cache agar perubahan halaman langsung terlihat.
+  app.use(staticCache(PUBLIC_DIR));
   app.use(express.static(PUBLIC_DIR, { maxAge: isProd ? "1h" : 0 }));
+
+  // Phase 7 (perf): injeksi versi aset (?v=hash) ke <link>/<script> di HTML publik saat respons,
+  // sehingga browser boleh meng-cache aset dengan aman tanpa risiko versi lama menempel.
+  const ASSET_VERSION = assetVersion(PUBLIC_DIR);
+  app.use(assetUrl(ASSET_VERSION));
 
   app.use(pageNotFound);
   app.use(errorHandler);
   return app;
+}
+
+// Hash singkat isi seluruh CSS+JS untuk cache-busting (diubah hanya saat file berubah).
+function assetVersion(publicDir) {
+  try {
+    const hash = crypto.createHash("sha256");
+    for (const dir of ["css", "js"]) {
+      const abs = path.join(publicDir, "assets", dir);
+      if (!fs.existsSync(abs)) continue;
+      for (const f of fs.readdirSync(abs).sort()) {
+        hash.update(f).update(fs.readFileSync(path.join(abs, f)));
+      }
+    }
+    return hash.digest("hex").slice(0, 10);
+  } catch (e) {
+    return String(Date.now());
+  }
 }
 
 module.exports = { createApp };

@@ -24,6 +24,8 @@ const notifications = [
 ];
 
 let notifIndex = 0;
+let toastHideTimer = null;
+let toastInterval = null;
 const toastEl = document.getElementById('toastPopup');
 const toastIcon = document.getElementById('toastIcon');
 const toastTitle = document.getElementById('toastTitle');
@@ -38,14 +40,26 @@ function showNextNotification() {
     toastTime.innerText = data.time;
 
     toastEl.classList.add('show');
-    setTimeout(() => { toastEl.classList.remove('show'); }, 4000);
+    clearTimeout(toastHideTimer); // Phase 7 (memory-leak audit): satu timer aktif, tidak menumpuk
+    toastHideTimer = setTimeout(() => { toastEl.classList.remove('show'); }, 4000);
     notifIndex = (notifIndex + 1) % notifications.length;
 }
 
 setTimeout(() => {
     showNextNotification();
-    setInterval(showNextNotification, 7000);
+    toastInterval = setInterval(showNextNotification, 7000);
 }, 2000);
+
+// Phase 7 (perf/memory): jeda polling toast saat tab tidak terlihat; bersihkan timer.
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        clearInterval(toastInterval);
+        toastInterval = null;
+    } else if (!toastInterval) {
+        showNextNotification();
+        toastInterval = setInterval(showNextNotification, 7000);
+    }
+});
 
 // LOCAL COMMENTS LOGIC
 const commentForm = document.getElementById('commentForm');
